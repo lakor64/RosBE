@@ -1,6 +1,6 @@
 
 declare -A rs_sources=(
-	["cmake.zip"]="https://github.com/reactos/CMake/archive/refs/heads/cmake-3.17.2-reactos.zip"
+	["cmake.zip"]="https://github.com/Kitware/CMake/archive/refs/tags/v3.28.3.zip"
 )
 
 declare -A rs_sha256sums=(

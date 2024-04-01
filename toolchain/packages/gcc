@@ -1,4 +1,4 @@
-# allow to build mingw runtime
+# RosBE version of https://github.com/msys2/MINGW-packages/blob/master/mingw-w64-gcc/PKGBUILD
 gcc_version="8.4.0"
 rs_triplets=true
 
@@ -6,6 +6,19 @@ source "$rs_tcdir/mingw.sh"
 
 declare -A rs_sources=(
 	["gcc.tar.xz"]="https://ftp.gnu.org/gnu/gcc/gcc-${gcc_version}/gcc-${gcc_version}.tar.xz"
+	[""]="https://raw.githubusercontent.com/msys2/MINGW-packages/master/mingw-w64-gcc/0002-Relocate-libintl.patch"
+	[""]="https://raw.githubusercontent.com/msys2/MINGW-packages/master/mingw-w64-gcc/0003-Windows-Follow-Posix-dir-exists-semantics-more-close.patch"
+	[""]="https://raw.githubusercontent.com/msys2/MINGW-packages/master/mingw-w64-gcc/0005-Windows-Don-t-ignore-native-system-header-dir.patch"
+	[""]="https://raw.githubusercontent.com/msys2/MINGW-packages/master/mingw-w64-gcc/0006-Windows-New-feature-to-allow-overriding.patch"
+	[""]="https://raw.githubusercontent.com/msys2/MINGW-packages/master/mingw-w64-gcc/0007-Build-EXTRA_GNATTOOLS-for-Ada.patch"
+	[""]="https://raw.githubusercontent.com/msys2/MINGW-packages/master/mingw-w64-gcc/0008-Prettify-linking-no-undefined.patch"
+	[""]="https://raw.githubusercontent.com/msys2/MINGW-packages/master/mingw-w64-gcc/0011-Enable-shared-gnat-implib.patch"
+	[""]="https://raw.githubusercontent.com/msys2/MINGW-packages/master/mingw-w64-gcc/0012-Handle-spaces-in-path-for-default-manifest.patch"
+	[""]="https://raw.githubusercontent.com/msys2/MINGW-packages/master/mingw-w64-gcc/0014-gcc-9-branch-clone_function_name_1-Retain-any-stdcall-suffix.patch"
+	[""]="https://raw.githubusercontent.com/msys2/MINGW-packages/master/mingw-w64-gcc/0020-libgomp-Don-t-hard-code-MS-printf-attributes.patch"
+	[""]="https://raw.githubusercontent.com/msys2/MINGW-packages/master/mingw-w64-gcc/0021-PR14940-Allow-a-PCH-to-be-mapped-to-a-different-addr.patch"
+	[""]="https://raw.githubusercontent.com/msys2/MINGW-packages/master/mingw-w64-gcc/0140-gcc-diagnostic-color.patch"
+	[""]="https://raw.githubusercontent.com/msys2/MINGW-packages/master/mingw-w64-gcc/0200-add-m-no-align-vector-insn-option-for-i386.patch"
 )
 
 declare -A rs_sha256sums=(
@@ -65,7 +78,29 @@ gcc_stage1() {
 	# stage 1: bootstrap gcc
 	reldir=$(realpath --relative-to="." "$rs_workdir/gcc/gcc-${gcc_version}")
 	if [ ! -e "$rs_workdir/gcc/build-${arch}/Makefile" ]; then
-		rs_do_command "$reldir/configure" --with-gmp="$rs_prefixdir/.." --with-mpc="$rs_prefixdir/.." --with-mpfr="$rs_prefixdir/.." --prefix="$rs_prefixdir" --target="$rs_target" --with-sysroot="$rs_prefixdir" --with-pkgversion="ReactOS Build Environment $ROSBE_VERSION" --with-bugurl="https://www.github.com/lakor64/rosbe/issues/" --with-changes-root-url="https://www.github.com/lakor64/rosbe/" --with-documentation-root-url="https://www.github.com/lakor64/rosbe/" --enable-languages=c,c++ --enable-fully-dynamic-string --enable-version-specific-runtime-libs --disable-shared --disable-multilib --disable-nls --disable-werror --disable-win32-registry --enable-sjlj-exceptions --disable-libstdcxx-verbose --enable-static --program-prefix="" $rs_host_autoconf
+		rs_do_command "$reldir/configure" \
+		--with-gmp="$rs_prefixdir/.." \
+		--with-mpc="$rs_prefixdir/.." \
+		--with-mpfr="$rs_prefixdir/.." \
+		--prefix="$rs_prefixdir" \
+		--target="$rs_target" \
+		--with-sysroot="$rs_prefixdir" \
+		--with-pkgversion=\"ReactOS Build Environment $ROSBE_VERSION\" \
+		--with-bugurl=\"https://www.github.com/lakor64/rosbe/issues/\" \
+		--with-changes-root-url=\"https://www.github.com/lakor64/rosbe/\" \
+		--with-documentation-root-url=\"https://www.github.com/lakor64/rosbe/\" \
+		--enable-languages=c,c++ \
+		--enable-fully-dynamic-string \
+		--enable-version-specific-runtime-libs \
+		--disable-shared \
+		--disable-multilib \
+		--disable-nls \
+		--disable-werror \
+		--disable-win32-registry \
+		--enable-sjlj-exceptions \
+		--disable-libstdcxx-verbose \
+		--enable-static \
+		$rs_host_autoconf
 	fi
 	rs_do_command $rs_makecmd -j $rs_cpucount all-gcc
 	rs_do_command $rs_makecmd install-gcc

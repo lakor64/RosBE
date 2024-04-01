@@ -1,22 +1,62 @@
-rs_version="2.34"
+# RosBE version of https://github.com/msys2/MINGW-packages/blob/master/mingw-w64-binutils/PKGBUILD
+rs_version="2.42"
 rs_triplets=true
 
 declare -A rs_sources=(
     ["binutils.tar.xz"]="https://ftp.gnu.org/gnu/binutils/binutils-${rs_version}.tar.xz"
+	# patches for reproducibility from Debian:
+	# https://salsa.debian.org/mingw-w64-team/binutils-mingw-w64/-/tree/master/debian/patches
+	# confirmed with 2.42 that it's still required
+	["reproducible-import-libraries.patch"]="https://raw.githubusercontent.com/msys2/MINGW-packages/master/mingw-w64-binutils/reproducible-import-libraries.patch"
+	["0002-check-for-unusual-file-harder.patch"]="https://raw.githubusercontent.com/msys2/MINGW-packages/master/mingw-w64-binutils/0002-check-for-unusual-file-harder.patch"
+	["0110-binutils-mingw-gnu-print.patch"]="https://raw.githubusercontent.com/msys2/MINGW-packages/master/mingw-w64-binutils/0110-binutils-mingw-gnu-print.patch"
+	["0010-bfd-Increase-_bfd_coff_max_nscns-to-65279.patch"]="https://raw.githubusercontent.com/msys2/MINGW-packages/master/mingw-w64-binutils/0010-bfd-Increase-_bfd_coff_max_nscns-to-65279.patch"
+	["2001-ld-option-to-move-default-bases-under-4GB.patch"]="https://raw.githubusercontent.com/msys2/MINGW-packages/master/mingw-w64-binutils/2001-ld-option-to-move-default-bases-under-4GB.patch"
+	["3001-hack-libiberty-link-order.patch"]="https://raw.githubusercontent.com/msys2/MINGW-packages/master/mingw-w64-binutils/3001-hack-libiberty-link-order.patch"
 )
 
 declare -A rs_sha256sums=(
     ["binutils.tar.xz"]="f00b0e8803dc9bab1e2165bd568528135be734df3fabf8d0161828cd56028952"
+	["reproducible-import-libraries.patch"]=""
+	["0002-check-for-unusual-file-harder.patch"]=""
+	["0110-binutils-mingw-gnu-print.patch"]=""
+	["0010-bfd-Increase-_bfd_coff_max_nscns-to-65279.patch"]=""
+	["2001-ld-option-to-move-default-bases-under-4GB.patch"]=""
+	["3001-hack-libiberty-link-order.patch"]=""
 )
 
 rs_prepare() {
     rs_extract_module "binutils" "$rs_workdir/binutils" "tar.xz"
+	cd "$rs_workdir/binutils/binutils-${rs_version}"
+	rs_do_command patch -p1 -i "$rs_sourcedir/reproducible-import-libraries.patch.patch"
+	rs_do_command patch -p1 -i "$rs_sourcedir/0002-check-for-unusual-file-harder.patch"
+	rs_do_command patch -p1 -i "$rs_sourcedir/0110-binutils-mingw-gnu-print.patch"
+	rs_do_command patch -p1 -i "$rs_sourcedir/0010-bfd-Increase-_bfd_coff_max_nscns-to-65279.patch"
+	rs_do_command patch -p1 -i "$rs_sourcedir/reproducible-import-libraries.patch.patch"
 }
+
+# https://wiki.debian.org/ReproducibleBuilds/TimestampsInStaticLibraries
+# display-rpath: do not hardcode library paths
 
 rs_build() {
 	reldir=$(realpath --relative-to="." "$rs_workdir/binutils/binutils-${rs_version}")
     if [ ! -e "$rs_workdir/binutils/build-${arch}/Makefile" ]; then
-        rs_do_command "$reldir/configure" --prefix="$rs_prefixdir" --target="$rs_target" --with-sysroot="$rs_prefixdir" --disable-multilib --disable-werror --enable-lto --enable-plugins --with-zlib=yes --disable-nls --enable-static --disable-shared --program-prefix="" $rs_host_autoconf
+        rs_do_command "$reldir/configure" \
+			--prefix="$rs_prefixdir" \
+			--target="$rs_target" \
+			--with-sysroot="$rs_prefixdir" \
+			--disable-multilib \
+			--disable-werror \
+			--enable-lto \
+			--enable-plugins \
+			--with-zlib=yes \
+			--disable-nls \
+			--enable-static \
+			--disable-shared \
+			--enable-deterministic-archives \
+			--disable-rpath \
+			--enable-install-libiberty \
+			$rs_host_autoconf
     fi
     rs_do_command $rs_makecmd -j $rs_cpucount
     rs_do_command $rs_makecmd install
